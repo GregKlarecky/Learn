@@ -1,0 +1,283 @@
+// emmet plugin
+
+// MIXINS
+@mixin warning {
+  background-color: orange;
+  color: #fff;
+}
+
+.warning-button {
+  @include warning;
+}
+
+// split font syntax
+@mixin font-mixin {
+  font: {
+    size: 22px;
+    weight: bold;
+  }
+}
+
+// mixins can include other mixins
+@mixin rounded {
+  border-radius: 6px;
+}
+
+@mixin box {
+  @include rounded;
+}
+
+//  mixins can be used on the root level
+@mixin fancy-links {
+  a {
+    font-style: italic;
+    text-decoration: none;
+  }
+}
+
+@include fancy-links;
+
+// Mixins can take arguments
+@mixin rounded-corners($radius) {
+  border-radius: $radius;
+}
+
+.rounde-me {
+  @include rounded-corners(5px);
+}
+
+// ...even two
+@mixin square($radius, $border) {
+  @include rounded-corners($radius);
+  border: $border;
+}
+
+.round-me {
+  @include square(5px, 1px solid #000);
+}
+
+// They take default value
+@mixin rounded-corners($radius: 5px) {
+  border-radius: $radius;
+}
+
+// You omit passing arguments then
+.round-me {
+  @include rounded-corners;
+}
+
+// or if you want to pass the second arument but first. Declere it's name
+// this is even more readable, good practice
+.round-me {
+  @include square($border: 1px solid #000);
+}
+
+// spread operator to put multiple arguments
+@mixin box-shadow($shadows...) {
+  box-shadow: $shadows;
+  -moz-box-shadow: $shadows;
+  -webkit-box-shadow: $shadows;
+}
+
+// applies only to IE6
+@mixin apply-to-ie-6 {
+  * html {
+    @content;
+  }
+}
+
+@include apply-to-ie-6 {
+  body {
+    font-size: 125%;
+  }
+}
+
+// imports also in css
+
+@import url();
+@import "http://...";
+@import "filename.css";
+@import "style-screeen" screen;
+
+@mixin google-font($font) {
+  $font: unguote($font);
+  @import url(https://fonts.googleapis.com/css?family=#{$font});
+}
+
+@include google-font("Alegreya+Sans");
+@include google-font("Titillium+Web");
+
+// MEDIA QUERIES
+// You can nest media quieres in scss only it's posible to create such a mixin
+@mixin small-screens() {
+  @media only screen and (min-width: 320px) {
+    @content;
+  }
+}
+
+body {
+  @include small-screens() {
+    font-size: 12px;
+  }
+}
+
+// OPERATIONS
+//  in CLI
+// sass --interactive
+// 3px + 4px
+// 7px
+
+// FUNCTIONS
+// -- build in functions
+// darkens by 15%
+.some-class {
+  color: darken($color-vairable, 15%);
+}
+// ~lightens by 15%
+.some-class {
+  color: lighten($color-vairable, 15%);
+}
+// adds transparency
+.some-class {
+  background-color: transparentize(#000, 1);
+}
+// opacify does oposite to transparentize
+.some-class {
+  background-color: opacify(#000, 0.5);
+}
+
+// --custom functions
+
+@function sum($left, $right) {
+  @return $left + $right;
+}
+
+// context takes value from wrapping container
+@function em($pixels, $context: 16px) {
+  @return ($left + $context) * 1em;
+}
+
+.some-class {
+  font-size: em(18px); //return em value which is equel to 18px
+}
+
+//col-width pattern
+@function col-width($columns: 12, $page-width: 100%, $gap: 1%) {
+  @return ($page-width - $gap * ($columns - 1)) / $columns;
+}
+$col: col-width(
+  $columns: 8
+);
+
+#content {
+  width: 6 * $col;
+}
+
+#sidebar {
+  width: 2 * $col;
+}
+
+@function strip-unit($value) {
+  @return $value / ($value * 0 + 1);
+}
+
+// INHERITANCE
+
+.error {
+  color: red;
+}
+
+.critical-error {
+  // extend puts styles from .error to .critical-error
+  @extend .error;
+  bottom: 1px solid red;
+  font-weight: bold;
+}
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//  You can not extend things elements defined outside media queries
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+%highlight {
+  font-style: italic;
+}
+
+.sub-title {
+  @extend %highlight; // it doesn't generate css class or code // interesting
+  padding: 8px 12px;
+  @extend .foo !optional; // if .foo exists extend it if no leave it
+}
+
+// mixins  create larger files but perform better when gzipped !!!
+
+// CONDITIONS
+$contrast: high;
+
+.some-class {
+  @if $contrast == high {
+    color: #000;
+  } @else if $contrast == low {
+    color: #999;
+  } @else {
+    color: $text-color;
+  }
+}
+
+// example
+$theme: Light;
+
+$text-color: #003061;
+$background-color: #a7cef5;
+
+@if $theme == Light {
+  $text-color: #555;
+  $background-color: #fff;
+} @else if $theme == Dark {
+  $text-color: #000;
+  $background-color: #777;
+}
+
+//  LOOPS
+
+@for $i from 1 through 6 {
+  .col-#{$i} {
+    width: $i * 2em;
+  }
+}
+
+// excludes 6
+@for $i from 1 to 6 {
+  .col-#{$i} {
+    width: $i * 2em;
+  }
+}
+
+// THAT ONE IS COOL!
+// lists
+$speakers: greg, bakang, demb;
+@each $speaker in $speakers {
+  .#{$speaker}-profile {
+    background-image: url("/img/#{$speaker}.png");
+  }
+}
+
+// maps
+$font-sizes: (
+  tiny: 8px,
+  small: 11px,
+  medium: 13px,
+  large: 18px
+);
+
+@each $name, $size in $font-sizes {
+  .#{$name} {
+    font-size: $size;
+  }
+}
+
+$j: 2;
+@while $j <= 8 {
+  .picture-#{$j} {
+    width: $j * 10%;
+  }
+  $j: $j + 2;
+}
